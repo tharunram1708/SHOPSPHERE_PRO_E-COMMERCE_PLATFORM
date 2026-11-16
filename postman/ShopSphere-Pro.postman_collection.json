@@ -1,0 +1,118 @@
+{
+  "info": {
+    "name": "ShopSphere Pro API",
+    "description": "Backend Phase 2 workflows. Register or configure a seeded admin, then capture the access token from login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "token", "value": "" },
+    { "key": "productId", "value": "1" },
+    { "key": "orderId", "value": "1" },
+    { "key": "ticketId", "value": "1" },
+    { "key": "orderLineId", "value": "1" },
+    { "key": "shipmentId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "Register customer",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"buyer@example.com\",\n  \"name\": \"Buyer\",\n  \"password\": \"strong-pass-123\"\n}" },
+        "url": "{{baseUrl}}/auth/register"
+      }
+    },
+    {
+      "name": "Login",
+      "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('token', pm.response.json().access_token);"] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"buyer@example.com\",\n  \"password\": \"strong-pass-123\"\n}" },
+        "url": "{{baseUrl}}/auth/login"
+      }
+    },
+    {
+      "name": "Current user",
+      "request": { "method": "GET", "url": "{{baseUrl}}/auth/me", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Browse products",
+      "request": { "method": "GET", "url": "{{baseUrl}}/products", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Place order",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"items\": [{\"product_id\": {{productId}}, \"quantity\": 1}]\n}" },
+        "url": "{{baseUrl}}/orders"
+      }
+    },
+    {
+      "name": "Create support ticket",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"subject\": \"Order assistance\",\n  \"message\": \"Please help with my order.\",\n  \"order_id\": {{orderId}}\n}" },
+        "url": "{{baseUrl}}/tickets"
+      }
+    },
+    {
+      "name": "My orders",
+      "request": { "method": "GET", "url": "{{baseUrl}}/orders", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Order timeline",
+      "request": { "method": "GET", "url": "{{baseUrl}}/orders/{{orderId}}/timeline", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Order fulfillment details",
+      "request": { "method": "GET", "url": "{{baseUrl}}/orders/{{orderId}}/fulfillments", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Ops — create split fulfillment",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"items\": [{\"order_line_id\": {{orderLineId}}, \"quantity\": 1}],\n  \"carrier\": \"ParcelCo\",\n  \"tracking_number\": \"TRACK-001\",\n  \"reason\": \"First parcel dispatched\"\n}" },
+        "url": "{{baseUrl}}/orders/{{orderId}}/fulfillments"
+      }
+    },
+    {
+      "name": "Ops — allocate a backorder",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"quantity\": 1,\n  \"reason\": \"Supplier inventory received\"\n}" },
+        "url": "{{baseUrl}}/orders/{{orderId}}/backorders/{{orderLineId}}/allocate"
+      }
+    },
+    {
+      "name": "Cancel order item",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"quantity\": 1,\n  \"reason\": \"Customer changed their order\"\n}" },
+        "url": "{{baseUrl}}/orders/{{orderId}}/items/{{orderLineId}}/cancel"
+      }
+    },
+    {
+      "name": "My tickets",
+      "request": { "method": "GET", "url": "{{baseUrl}}/tickets", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Admin or ops — summary report",
+      "request": { "method": "GET", "url": "{{baseUrl}}/reports/summary", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }] }
+    },
+    {
+      "name": "Swagger OpenAPI JSON",
+      "request": { "method": "GET", "url": "{{baseUrl}}/openapi.json" }
+    }
+  ]
+}
