@@ -8,7 +8,7 @@ from .dependencies import current_user
 from .models import User
 from .security import password_hash
 from .database import Base
-from .routers import auth, orders, products, promotions, reports, tickets
+from .routers import auth, orders, products, promotions, reports, tickets, users
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -25,5 +25,5 @@ async def lifespan(_: FastAPI):
     yield
 
 app = FastAPI(title="ShopSphere Pro API", version="2.0.0", description="Operational, commercial, customer service and reporting APIs", lifespan=lifespan)
-for route_group in (auth.router, products.router, promotions.router, orders.router, tickets.router, reports.router):
+for route_group in (auth.router, users.router, products.router, promotions.router, orders.router, tickets.router, reports.router):
     app.include_router(route_group)

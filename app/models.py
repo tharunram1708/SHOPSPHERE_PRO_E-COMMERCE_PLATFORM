@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -13,7 +14,17 @@ class User(Base):
     name = Column(String(120), nullable=False)
     password_hash = Column(String(256), nullable=False)
     role = Column(String(20), nullable=False, default="customer")
+    status = Column(String(20), nullable=False, default="active", index=True)
+    permissions_json = Column(Text, nullable=False, default="[]")
     created_at = Column(DateTime, default=now, nullable=False)
+
+    @property
+    def permissions(self) -> list[str]:
+        try:
+            value = json.loads(self.permissions_json or "[]")
+            return value if isinstance(value, list) else []
+        except (TypeError, ValueError):
+            return []
 
 class Product(Base):
     __tablename__ = "products"
@@ -78,6 +89,18 @@ class OrderStatusHistory(Base):
     from_status = Column(String(24), nullable=True)
     to_status = Column(String(24), nullable=False)
     reason = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=now, nullable=False)
+
+class AuthToken(Base):
+    """Issued JWT identifiers, allowing refresh rotation and immediate revocation."""
+    __tablename__ = "auth_tokens"
+    id = Column(Integer, primary_key=True)
+    jti = Column(String(36), unique=True, index=True, nullable=False)
+    session_id = Column(String(36), index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    token_type = Column(String(10), nullable=False)  # access | refresh
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=now, nullable=False)
 
 

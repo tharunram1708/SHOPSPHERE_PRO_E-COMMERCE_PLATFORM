@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..dependencies import current_user, log, require_roles
+from ..dependencies import current_user, log, require_permissions
 from ..models import Order, OrderLine, OrderStatusHistory, Product, Promotion, Shipment, ShipmentLine, User, now
 from ..schemas import (BackorderAllocationIn, CancelOrderLineIn, FulfillmentCreateIn,
                        FulfillmentOut, OrderIn, OrderOut, OrderTimelineOut,
@@ -76,7 +76,7 @@ def get_order(order_id: int, db: Session = Depends(get_db), actor: User = Depend
     return order_json(order)
 
 @router.patch("/orders/{order_id}/status", response_model=OrderOut)
-def change_order_status(order_id: int, data: StatusIn, db: Session = Depends(get_db), actor: User = Depends(require_roles("admin", "ops"))):
+def change_order_status(order_id: int, data: StatusIn, db: Session = Depends(get_db), actor: User = Depends(require_permissions("orders:manage"))):
     order = db.get(Order, order_id)
     if not order: raise HTTPException(404, "Order not found")
     validate_transition(order, data.status)
@@ -130,7 +130,7 @@ def list_fulfillments(order_id: int, db: Session = Depends(get_db), actor: User 
 
 
 @router.post("/orders/{order_id}/fulfillments", status_code=201, response_model=FulfillmentOut)
-def create_fulfillment(order_id: int, data: FulfillmentCreateIn, db: Session = Depends(get_db), actor: User = Depends(require_roles("admin", "ops"))):
+def create_fulfillment(order_id: int, data: FulfillmentCreateIn, db: Session = Depends(get_db), actor: User = Depends(require_permissions("orders:manage"))):
     order = db.get(Order, order_id)
     if not order:
         raise HTTPException(404, "Order not found")
@@ -172,7 +172,7 @@ def create_fulfillment(order_id: int, data: FulfillmentCreateIn, db: Session = D
 
 @router.patch("/orders/{order_id}/fulfillments/{shipment_id}/status", response_model=FulfillmentOut)
 def update_fulfillment_status(order_id: int, shipment_id: int, data: ShipmentStatusIn,
-                              db: Session = Depends(get_db), actor: User = Depends(require_roles("admin", "ops"))):
+                              db: Session = Depends(get_db), actor: User = Depends(require_permissions("orders:manage"))):
     order = db.get(Order, order_id)
     if not order:
         raise HTTPException(404, "Order not found")
@@ -209,7 +209,7 @@ def cancel_order_item(order_id: int, line_id: int, data: CancelOrderLineIn,
 
 @router.post("/orders/{order_id}/backorders/{line_id}/allocate")
 def allocate_backorder(order_id: int, line_id: int, data: BackorderAllocationIn,
-                       db: Session = Depends(get_db), actor: User = Depends(require_roles("admin", "ops"))):
+                       db: Session = Depends(get_db), actor: User = Depends(require_permissions("orders:manage"))):
     order = db.get(Order, order_id)
     if not order:
         raise HTTPException(404, "Order not found")

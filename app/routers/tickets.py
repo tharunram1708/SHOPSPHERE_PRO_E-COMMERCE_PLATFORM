@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..dependencies import current_user, log, require_roles
+from ..dependencies import current_user, log, require_permissions
 from ..models import Order, Ticket, User
 from ..schemas import TicketIn, TicketOut, TicketUpdate
 from ..services import ticket_json
@@ -27,7 +27,7 @@ def tickets(status_filter: Optional[str] = Query(None, alias="status"), skip: in
     return [ticket_json(t) for t in db.scalars(stmt.offset(skip).limit(limit)).all()]
 
 @router.patch("/tickets/{ticket_id}", response_model=TicketOut)
-def update_ticket(ticket_id: int, data: TicketUpdate, db: Session = Depends(get_db), actor: User = Depends(require_roles("admin", "support"))):
+def update_ticket(ticket_id: int, data: TicketUpdate, db: Session = Depends(get_db), actor: User = Depends(require_permissions("tickets:manage"))):
     t = db.get(Ticket, ticket_id)
     if not t: raise HTTPException(404, "Ticket not found")
     changes = data.model_dump(exclude_unset=True)

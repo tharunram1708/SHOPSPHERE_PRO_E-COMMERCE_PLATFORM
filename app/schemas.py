@@ -11,6 +11,18 @@ class LoginIn(BaseModel):
     email: EmailStr
     password: str
 
+class RefreshIn(BaseModel):
+    refresh_token: str
+
+class LogoutIn(BaseModel):
+    refresh_token: Optional[str] = None
+
+class EmployeeCreateIn(BaseModel):
+    email: EmailStr
+    name: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=12, max_length=128)
+    role: str = Field(pattern="^(ops|support)$")
+
 class ProductIn(BaseModel):
     sku: str = Field(min_length=1, max_length=64)
     name: str = Field(min_length=1, max_length=160)
@@ -94,9 +106,37 @@ class UserOut(BaseModel):
 
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
     expires_in: int
+    refresh_expires_in: int
     role: str
+    status: str = "active"
+    permissions: list[str] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+
+class UserUpdateIn(BaseModel):
+    email: Optional[EmailStr] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    role: Optional[str] = Field(default=None, pattern="^(customer|ops|support|admin)$")
+    status: Optional[str] = Field(default=None, pattern="^(active|inactive|suspended)$")
+    permissions: Optional[list[str]] = None
+
+class UserCreateIn(BaseModel):
+    email: EmailStr
+    name: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=8, max_length=128)
+    role: str = Field(default="customer", pattern="^(customer|ops|support|admin)$")
+    permissions: list[str] = Field(default_factory=list)
+
+class UserActivityOut(BaseModel):
+    id: int
+    actor_id: Optional[int]
+    action: str
+    entity_type: str
+    entity_id: Optional[int]
+    details: str
+    created_at: datetime
 
 class ProductOut(BaseModel):
     id: int

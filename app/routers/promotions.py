@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..dependencies import current_user, log, require_roles
+from ..dependencies import current_user, log, require_permissions
 from ..models import Promotion, User
 from ..schemas import PromotionIn, PromotionOut
 from ..models import now
@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/promotions", status_code=201, response_model=PromotionOut)
-def create_promotion(data: PromotionIn, db: Session = Depends(get_db), actor: User = Depends(require_roles("admin", "ops"))):
+def create_promotion(data: PromotionIn, db: Session = Depends(get_db), actor: User = Depends(require_permissions("promotions:write"))):
     code = data.code.strip().upper()
     if data.kind not in ("percent", "fixed"): raise HTTPException(422, "kind must be percent or fixed")
     if data.kind == "percent" and data.value > 100: raise HTTPException(422, "Percentage cannot exceed 100")
